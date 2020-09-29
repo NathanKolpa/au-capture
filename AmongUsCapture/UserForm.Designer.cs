@@ -243,6 +243,7 @@ namespace AmongUsCapture
 			// ConsoleTextBox
 			// 
 			this.ConsoleTextBox.AutoWordSelection = true;
+			this.ConsoleTextBox.BackColor = System.Drawing.SystemColors.ControlDarkDark;
 			this.ConsoleTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			this.ConsoleTextBox.ContextMenuStrip = this.contextMenuStrip1;
 			this.ConsoleTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
