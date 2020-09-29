@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using SocketIOClient;
@@ -8,58 +10,53 @@ namespace AmongUsCapture
 {
     public class ClientSocket
     { 
-        private SocketIO socket;
-        private string ConnectCode;
+        private string ConnectCode = null;
+        private HttpClient httpClient = new HttpClient();
 
         public void Connect(string url)
         {
-            socket = new SocketIO(url);
-            /*socket.On("hi", response =>
-            {
-                string text = response.GetValue<string>();
-            });*/
-            socket.OnConnected += (sender, e) =>
-            {
-                GameMemReader.getInstance().GameStateChanged += GameStateChangedHandler;
-                GameMemReader.getInstance().PlayerChanged += PlayerChangedHandler;
-                GameMemReader.getInstance().JoinedLobby += JoinedLobbyHandler;
-            };
-            
-            socket.OnDisconnected += (sender, e) =>
-            {
-                GameMemReader.getInstance().GameStateChanged -= GameStateChangedHandler;
-                GameMemReader.getInstance().PlayerChanged -= PlayerChangedHandler;
-                GameMemReader.getInstance().JoinedLobby -= JoinedLobbyHandler;
-            };
+            httpClient.BaseAddress = new Uri("http://localhost:8080");
 
-            socket.ConnectAsync();
+            GameMemReader.getInstance().GameStateChanged += GameStateChangedHandler;
+            GameMemReader.getInstance().PlayerChanged += PlayerChangedHandler;
+            GameMemReader.getInstance().JoinedLobby += JoinedLobbyHandler;
         }
 
         public void SendConnectCode(string connectCode)
         {
-            ConnectCode = connectCode;
-            socket.EmitAsync("connect", ConnectCode).ContinueWith((t) => {
-                GameMemReader.getInstance().ForceUpdatePlayers();
-                GameMemReader.getInstance().ForceTransmitState();
-            });
-            Program.conInterface.WriteTextFormatted($"[§bClientSocket§f] Connection code (§c{connectCode}§f) sent to server.");
-            //Program.conInterface.WriteModuleTextColored("GameMemReader", System.Drawing.Color.Aqua, $"Connection code ({connectCode}) sent to server.");
+			ConnectCode = connectCode;
+            httpClient.DefaultRequestHeaders.Remove("Capture-Code");
+            httpClient.DefaultRequestHeaders.Add("Capture-Code", connectCode);
+
+            GameMemReader.getInstance().ForceUpdatePlayers();// FORCE UPDATE EVERYTHING
+            GameMemReader.getInstance().ForceTransmitState();
         }
 
         private void GameStateChangedHandler(object sender, GameStateChangedEventArgs e)
         {
-            socket.EmitAsync("state", JsonSerializer.Serialize(e.NewState)); // could possibly use continueWith() w/ callback if result is needed
+            if (ConnectCode == null)
+                return;
+
+            var data = new StringContent(JsonSerializer.Serialize(e), Encoding.UTF8, "application/json");
+            httpClient.PutAsync("game-state", data);
         }
 
         private void PlayerChangedHandler(object sender, PlayerChangedEventArgs e)
         {
-            socket.EmitAsync("player", JsonSerializer.Serialize(e)); //Makes code wait for socket to emit before closing thread.
+            if (ConnectCode == null)
+                return;
+
+            var data = new StringContent(JsonSerializer.Serialize(e), Encoding.UTF8, "application/json");
+            httpClient.PutAsync("player-state", data);
         }
 
         private void JoinedLobbyHandler(object sender, LobbyEventArgs e)
         {
-            socket.EmitAsync("lobby", JsonSerializer.Serialize(e));
-        }
+            if (ConnectCode == null)
+                return;
 
+            var data = new StringContent(JsonSerializer.Serialize(e), Encoding.UTF8, "application/json");
+            httpClient.PutAsync("lobby-state", data);
+        }
     }
 }

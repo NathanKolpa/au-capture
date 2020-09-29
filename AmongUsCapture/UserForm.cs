@@ -79,8 +79,8 @@ namespace AmongUsCapture
             CurrentStateGroupBox.BackColor = LighterGrey;
             CurrentStateGroupBox.ForeColor = White;
 
-            ConnectCodeGB.BackColor = LighterGrey;
-            ConnectCodeGB.ForeColor = White;
+            SubmitButton.BackColor = LighterGrey;
+            SubmitButton.ForeColor = White;
 
             ConnectCodeBox.BackColor = DarkGrey;
             ConnectCodeBox.ForeColor = White;
@@ -119,12 +119,9 @@ namespace AmongUsCapture
 
         private void SubmitButton_Click(object sender, EventArgs e)
         {
-            if (ConnectCodeBox.TextLength == 6)
-            {
-                clientSocket.SendConnectCode(ConnectCodeBox.Text);
-                //ConnectCodeBox.Enabled = false;
-                //SubmitButton.Enabled = false;
-            }
+            clientSocket.SendConnectCode(ConnectCodeBox.Text);
+            //ConnectCodeBox.Enabled = false;
+            //SubmitButton.Enabled = false;
         }
 
         private void ConsoleTextBox_TextChanged(object sender, EventArgs e)
@@ -303,6 +300,10 @@ namespace AmongUsCapture
            
         }
 
-    }
+		private void ConnectCodeGB_Enter(object sender, EventArgs e)
+		{
+
+		}
+	}
 
 }
